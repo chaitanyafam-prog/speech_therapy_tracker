@@ -1,0 +1,7 @@
+flask
+numpy
+scipy
+soundfile
+noisereduce
+pyloudnorm
+gunicorn

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ ex['title'] }} · Speech Exercise Tracker{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('patient_home') }}">← My exercises</a></p>
+<h1>{{ ex['title'] }}</h1>
+<p>{{ ex['instructions'] }}</p>
+{% if ex['prompt_text'] %}<p class="prompt">{{ ex['prompt_text'] }}</p>{% endif %}
+
+<section class="card recorder" id="recorder"
+         data-assignment="{{ ex['id'] }}"
+         data-min="{{ ex['min_seconds'] }}" data-max="{{ ex['max_seconds'] }}"
+         data-done-url="{{ url_for('patient_home') }}">
+  <div id="timer" class="timer" aria-live="off">0:00</div>
+  <div id="status" class="muted" role="status">Find a quiet place, hold the phone about a hand's width from your mouth, then tap Record.</div>
+
+  <button id="record" class="primary big" type="button">● Record</button>
+
+  <div id="review" hidden>
+    <audio id="preview" controls></audio>
+    <div class="actions">
+      <button id="again" type="button">Record again</button>
+      <button id="submit" class="primary" type="button">Submit</button>
+    </div>
+  </div>
+
+  <details class="alt">
+    <summary>Microphone not working? Upload a WAV file instead</summary>
+    <input id="file" type="file" accept=".wav,audio/wav">
+  </details>
+</section>
+
+<script src="{{ url_for('static', filename='recorder.js') }}"></script>
+{% endblock %}

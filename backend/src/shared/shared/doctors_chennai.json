@@ -1,0 +1,15 @@
+{
+  "_note": "DEMO DATA ONLY. These are placeholder entries so the feature can be built and tested; they are not real clinicians. Replace with hand-verified entries (set demo to false, add a real phone number and verified_on date) before any real use.",
+  "doctors": [
+    {"id": "demo-slp-tnagar", "demo": true, "name": "Demo Speech Clinic (T. Nagar)", "specialty": "slp", "clinic": "Demo clinic", "address": "T. Nagar, Chennai", "area": "T. Nagar", "lat": 13.0418, "lng": 80.2341, "phone": null, "verified_on": null},
+    {"id": "demo-slp-adyar", "demo": true, "name": "Demo Speech Clinic (Adyar)", "specialty": "slp", "clinic": "Demo clinic", "address": "Adyar, Chennai", "area": "Adyar", "lat": 13.0067, "lng": 80.2570, "phone": null, "verified_on": null},
+    {"id": "demo-slp-annanagar", "demo": true, "name": "Demo Speech Clinic (Anna Nagar)", "specialty": "slp", "clinic": "Demo clinic", "address": "Anna Nagar, Chennai", "area": "Anna Nagar", "lat": 13.0850, "lng": 80.2101, "phone": null, "verified_on": null},
+    {"id": "demo-slp-velachery", "demo": true, "name": "Demo Speech Clinic (Velachery)", "specialty": "slp", "clinic": "Demo clinic", "address": "Velachery, Chennai", "area": "Velachery", "lat": 12.9815, "lng": 80.2180, "phone": null, "verified_on": null},
+    {"id": "demo-slp-tambaram", "demo": true, "name": "Demo Speech Clinic (Tambaram)", "specialty": "slp", "clinic": "Demo clinic", "address": "Tambaram, Chennai", "area": "Tambaram", "lat": 12.9249, "lng": 80.1000, "phone": null, "verified_on": null},
+    {"id": "demo-neuro-mylapore", "demo": true, "name": "Demo Neurology Clinic (Mylapore)", "specialty": "neurologist", "clinic": "Demo clinic", "address": "Mylapore, Chennai", "area": "Mylapore", "lat": 13.0368, "lng": 80.2676, "phone": null, "verified_on": null},
+    {"id": "demo-neuro-egmore", "demo": true, "name": "Demo Neurology Clinic (Egmore)", "specialty": "neurologist", "clinic": "Demo clinic", "address": "Egmore, Chennai", "area": "Egmore", "lat": 13.0732, "lng": 80.2609, "phone": null, "verified_on": null},
+    {"id": "demo-neuro-porur", "demo": true, "name": "Demo Neurology Clinic (Porur)", "specialty": "neurologist", "clinic": "Demo clinic", "address": "Porur, Chennai", "area": "Porur", "lat": 13.0358, "lng": 80.1565, "phone": null, "verified_on": null},
+    {"id": "demo-ent-guindy", "demo": true, "name": "Demo ENT Clinic (Guindy)", "specialty": "ent", "clinic": "Demo clinic", "address": "Guindy, Chennai", "area": "Guindy", "lat": 13.0067, "lng": 80.2206, "phone": null, "verified_on": null},
+    {"id": "demo-gp-perambur", "demo": true, "name": "Demo General Clinic (Perambur)", "specialty": "gp", "clinic": "Demo clinic", "address": "Perambur, Chennai", "area": "Perambur", "lat": 13.1186, "lng": 80.2330, "phone": null, "verified_on": null}
+  ]
+}

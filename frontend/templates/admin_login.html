@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Directory admin · Speech Exercise Tracker{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Directory admin</h1>
+  {% if configured %}
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Admin password <input type="password" name="password" autocomplete="current-password" required></label>
+    <button class="primary" type="submit">Sign in</button>
+  </form>
+  {% else %}
+  <p class="muted">Admin access is disabled. Set the <code>ADMIN_PASSWORD</code> environment variable and restart the app.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Patients · Speech Exercise Tracker{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Your patients</h1>
+  <p class="invite">Share this invite code with new patients:
+    <strong class="code">{{ user['invite_code'] }}</strong></p>
+</section>
+
+{% if rows %}
+  <ul class="list">
+  {% for r in rows %}
+    <li>
+      <a class="row" href="{{ url_for('doctor_patient', patient_id=r.patient['id']) }}">
+        <span>
+          <strong>{{ r.patient['name'] }}</strong>
+          <span class="muted block">Last recording: {{ r.last_at | ist }}</span>
+        </span>
+        {% if r.target %}
+          <span class="pill {{ 'ok' if r.done >= r.target else 'warn' }}">{{ r.done }}/{{ r.target }} this week</span>
+        {% else %}
+          <span class="pill">No exercises yet</span>
+        {% endif %}
+      </a>
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted card">No patients yet. Patients join by registering with your invite code.</p>
+{% endif %}
+{% endblock %}

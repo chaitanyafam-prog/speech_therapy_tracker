@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Clinician directory · Speech Exercise Tracker{% endblock %}
+{% block content %}
+<h1>Clinician directory</h1>
+<p class="muted">Choose a city or area to browse listings. Contact the clinic to confirm availability and arrange an in-person appointment.</p>
+
+<form method="get" class="card directory-filter">
+  <label>City
+    <select name="city" onchange="this.form.submit()">
+      <option value="">All cities</option>
+      {% for row in cities %}<option value="{{ row['city'] }}" {% if row['city']|lower == selected_city|lower %}selected{% endif %}>{{ row['city'] }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Area or place
+    <select name="place">
+      <option value="">All areas</option>
+      {% for row in places %}<option value="{{ row['place'] }}" {% if row['place']|lower == selected_place|lower %}selected{% endif %}>{{ row['place'] }}</option>{% endfor %}
+    </select>
+  </label>
+  <button class="primary" type="submit">Show clinicians</button>
+</form>
+
+{% if doctors %}
+  <p class="muted small">{{ doctors|length }} listing{{ '' if doctors|length == 1 else 's' }}</p>
+  {% for doctor in doctors %}
+  <article class="card clinician-card">
+    <h2>{{ doctor['name'] }}</h2>
+    <p><strong>{{ doctor['specialty'] }}</strong> · {{ doctor['clinic'] }}</p>
+    <p>{{ doctor['address'] }}<br>{{ doctor['place'] }}, {{ doctor['city'] }}</p>
+    <div class="directory-actions">
+      <a class="btn" href="tel:{{ doctor['phone'] }}">Call {{ doctor['phone'] }}</a>
+      <a class="btn" href="mailto:{{ doctor['email'] }}?subject=Appointment%20enquiry">Email clinic</a>
+      <a class="btn" href="{{ doctor['booking_url'] }}" target="_blank" rel="noopener noreferrer">Book online</a>
+    </div>
+    <p class="muted small">Call the clinic or use online booking to arrange or discuss your next in-person appointment.</p>
+    {% if user and user['role'] == 'patient' and doctor['doctor_user_id'] and not user['doctor_id'] %}
+    <form method="post" action="{{ url_for('connect_directory_doctor', entry_id=doctor['id']) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="primary" type="submit">Connect in the exercise tracker</button>
+    </form>
+    {% elif not user %}
+    <p class="muted small">After the clinic gives you its tracker invite code, <a href="{{ url_for('register') }}">create an account</a> to receive assigned exercises and submit recordings for clinician review.</p>
+    {% endif %}
+  </article>
+  {% endfor %}
+{% else %}
+  <section class="card"><h2>No listings for this selection yet</h2><p class="muted">Try another city or area, or check back as verified clinicians are added.</p></section>
+{% endif %}
+{% endblock %}

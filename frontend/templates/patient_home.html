@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}My exercises · Speech Exercise Tracker{% endblock %}
+{% block content %}
+<h1>My exercises</h1>
+
+{% if doctor %}
+  <p class="muted">Your clinician: <strong>{{ doctor['name'] }}</strong></p>
+
+  {% if plan %}
+    <ul class="list">
+    {% for a in plan %}
+      <li>
+        <a class="row" href="{{ url_for('patient_record', assignment_id=a['id']) }}">
+          <span>
+            <strong>{{ a['title'] }}</strong>
+            <span class="muted block">{{ a['done'] }} of {{ a['times_per_week'] }} done this week</span>
+          </span>
+          <span class="pill {{ 'ok' if a['done'] >= a['times_per_week'] else 'warn' }}">
+            {{ 'Done ✓' if a['done'] >= a['times_per_week'] else 'Record' }}
+          </span>
+        </a>
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p class="card muted">Your clinician has not assigned any exercises yet. Check back soon.</p>
+  {% endif %}
+{% else %}
+  <section class="card">
+    <h2>Connect with a clinician</h2>
+    <p class="muted">Browse verified clinic listings by city or area, or enter an invite code from your clinic.</p>
+    <p><a class="primary" href="{{ url_for('clinician_directory') }}">Browse the clinician directory</a></p>
+    <form method="post" action="{{ url_for('patient_link') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Invite code
+        <input type="text" name="code" maxlength="12" autocomplete="off" required>
+      </label>
+      <button class="primary" type="submit">Link my account</button>
+    </form>
+  </section>
+
+{% endif %}
+
+{% endblock %}

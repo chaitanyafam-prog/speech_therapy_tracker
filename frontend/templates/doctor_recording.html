@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ rec['title'] }} · {{ rec['patient_name'] }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('doctor_patient', patient_id=rec['patient_id']) }}">← {{ rec['patient_name'] }}</a></p>
+<h1>{{ rec['title'] }}</h1>
+<p class="muted">{{ rec['created_at'] | ist }} · {{ '%.1f' | format(rec['duration']) }} s</p>
+
+{% if rec['prompt_text'] %}
+<p class="prompt">{{ rec['prompt_text'] }}</p>
+{% endif %}
+
+<section class="card">
+  <div class="toggle" role="group" aria-label="Audio version">
+    <button type="button" class="seg active" data-version="clean">Cleaned</button>
+    <button type="button" class="seg" data-version="original">Original</button>
+  </div>
+  <audio id="player" controls preload="auto" src="{{ url_for('media', recording_id=rec['id'], version='clean') }}"></audio>
+
+  <div class="speed">
+    Speed:
+    <button type="button" class="seg active" data-rate="1">1×</button>
+    <button type="button" class="seg" data-rate="0.75">0.75×</button>
+    <button type="button" class="seg" data-rate="0.5">0.5×</button>
+  </div>
+
+  <p class="muted small">
+    <strong>Cleaned</strong> is noise-reduced and volume-levelled for listening on a phone speaker.
+    <strong>Original</strong> is exactly what the patient recorded — use it before drawing any
+    conclusion about breathiness, hoarseness or slurring, because noise reduction can soften them.
+  </p>
+</section>
+
+<script>
+  const player = document.getElementById('player');
+  const base = "{{ url_for('media', recording_id=rec['id'], version='clean')|replace('clean.wav', '') }}";
+
+  document.querySelectorAll('[data-version]').forEach(btn => btn.addEventListener('click', () => {
+    const t = player.currentTime, wasPlaying = !player.paused, rate = player.playbackRate;
+    document.querySelectorAll('[data-version]').forEach(b => b.classList.toggle('active', b === btn));
+    player.src = base + btn.dataset.version + '.wav';
+    player.addEventListener('loadedmetadata', () => {
+      player.currentTime = t;
+      player.playbackRate = rate;
+      if (wasPlaying) player.play();
+    }, { once: true });
+  }));
+
+  document.querySelectorAll('[data-rate]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-rate]').forEach(b => b.classList.toggle('active', b === btn));
+    player.playbackRate = parseFloat(btn.dataset.rate);
+  }));
+</script>
+{% endblock %}

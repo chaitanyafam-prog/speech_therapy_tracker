@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Manage clinician directory · Speech Exercise Tracker{% endblock %}
+{% block content %}
+<div class="admin-heading"><div><h1>Manage clinician directory</h1><p class="muted">New entries stay private until approved.</p></div>
+  <form method="post" action="{{ url_for('admin_logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="link" type="submit">Log out admin</button></form>
+</div>
+
+<section class="card">
+  <h2>Add a clinic listing</h2>
+  <p class="muted small">The format checks below catch missing or malformed contact details. They do not prove a clinician's identity or credentials. Confirm those manually before approving; automated legitimacy checks will be added later.</p>
+  <form method="post" class="directory-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Clinician name <input name="name" required></label>
+    <label>Specialty <input name="specialty" placeholder="Speech-language pathologist" required></label>
+    <label>Clinic <input name="clinic" required></label>
+    <label>Street address <input name="address" required></label>
+    <label>City <input name="city" required></label>
+    <label>Area or place <input name="place" required></label>
+    <label>Phone <input name="phone" type="tel" required></label>
+    <label>Contact email <input name="email" type="email" required></label>
+    <label>Online booking URL <input name="booking_url" type="url" placeholder="https://..." required></label>
+    <label>Tracker doctor account (optional)
+      <select name="doctor_user_id"><option value="">Not linked to a tracker account</option>{% for account in doctor_accounts %}<option value="{{ account['id'] }}">{{ account['name'] }} · {{ account['email'] }}</option>{% endfor %}</select>
+    </label>
+    <button class="primary" type="submit">Add pending listing</button>
+  </form>
+</section>
+
+<h2>Listings</h2>
+{% for entry in entries %}
+<article class="card">
+  <div class="admin-heading"><div><h2>{{ entry['name'] }}</h2><p class="muted">{{ entry['clinic'] }} · {{ entry['place'] }}, {{ entry['city'] }}</p></div><span class="pill {{ 'ok' if entry['verification_status'] == 'verified' else 'warn' }}">{{ entry['verification_status'] }}</span></div>
+  <p>{{ entry['address'] }} · {{ entry['phone'] }} · {{ entry['email'] }}</p>
+  <p><a href="{{ entry['booking_url'] }}" target="_blank" rel="noopener noreferrer">{{ entry['booking_url'] }}</a></p>
+  {% if entry['doctor_user_id'] %}<p class="muted small">Linked to a tracker doctor account.</p>{% endif %}
+  {% if entry['verification_status'] == 'pending' %}
+    {% set errors = validation_errors(dict(entry)) %}
+    {% if errors %}<ul class="error-text">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>{% else %}
+    <p class="muted small">Before approving, manually confirm the clinician identity, qualifications, clinic, and contact details.</p>
+    <form method="post" action="{{ url_for('verify_directory_doctor', entry_id=entry['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="primary" type="submit">Approve and publish</button></form>
+    {% endif %}
+  {% endif %}
+  <form method="post" action="{{ url_for('remove_directory_doctor', entry_id=entry['id']) }}" onsubmit="return confirm('Remove this directory listing?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="link danger" type="submit">Remove listing</button></form>
+</article>
+{% else %}<p class="card muted">No clinician listings have been added yet.</p>{% endfor %}
+{% endblock %}

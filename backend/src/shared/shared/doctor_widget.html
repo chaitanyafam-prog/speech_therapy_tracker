@@ -1,0 +1,31 @@
+<section class="card" id="doctor-card" aria-labelledby="doctor-heading">
+  <h2 id="doctor-heading">Find a specialist near you</h2>
+  <p class="muted small">
+    Find speech therapists and doctors near you, whatever your result.
+    {% if live_search %}To do this, the place you choose is sent to Google Maps to look up nearby clinics. We do not
+    save it.{% else %}The place you choose is used only to sort this list. We do not save it.{% endif %}
+    Choose an area below if you prefer not to share your exact location.
+  </p>
+
+  <label>Type of clinician
+    <select id="doctor-specialty">
+      <option value="slp">Speech-language pathologist</option>
+      <option value="neurologist">Neurologist</option>
+      <option value="ent">ENT specialist</option>
+      <option value="gp">General physician</option>
+      <option value="">Any</option>
+    </select>
+  </label>
+
+  <label>Your area (Chennai)
+    <select id="area">
+      <option value="">Use my current location</option>
+      {% for key, label in areas %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+
+  <button id="find-doctors" class="primary" type="button" data-endpoint="{{ url_for('doctors') }}">Find clinicians</button>
+  <p id="doctor-status" class="muted small" role="status"></p>
+  <div id="doctor-results"></div>
+</section>
+<script src="{{ url_for('doctors_js') }}"></script>

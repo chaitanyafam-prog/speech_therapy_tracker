@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: speech-therapy-tracker
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn backend.src.app:app
+    healthCheckPath: /login
+    disk:
+      name: tracker-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE
+        value: /var/data/tracker.db
+      - key: UPLOAD_DIR
+        value: /var/data/recordings
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DOCTOR_SIGNUP_CODE
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: THERAPY_TRACKER_URL
+        sync: false

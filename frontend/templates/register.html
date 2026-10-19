@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Create account · Speech Exercise Tracker{% endblock %}
+{% block content %}
+{% set f = form or {} %}
+<section class="card narrow">
+  <h1>Create an account</h1>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <fieldset class="choice">
+      <legend>I am a…</legend>
+      <label><input type="radio" name="role" value="patient" {% if f.get('role', 'patient') == 'patient' %}checked{% endif %}> Patient</label>
+      <label><input type="radio" name="role" value="doctor" {% if f.get('role') == 'doctor' %}checked{% endif %}> Doctor / therapist</label>
+    </fieldset>
+
+    <label>Full name <input type="text" name="name" value="{{ f.get('name', '') }}" autocomplete="name" required></label>
+    <label>Email <input type="email" name="email" value="{{ f.get('email', '') }}" autocomplete="email" required></label>
+    <label>Password (8+ characters) <input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
+    <label><span id="code-label">Doctor invite code (optional)</span>
+      <input type="text" name="code" id="code" autocomplete="off">
+    </label>
+    <p class="muted" id="code-help">Your clinic gives you a 6-character invite code. No code yet? Leave this blank and add it later.</p>
+
+    <button class="primary" type="submit">Create account</button>
+  </form>
+  <p class="muted">Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+</section>
+
+<script>
+  const radios = document.querySelectorAll('input[name=role]');
+  const label = document.getElementById('code-label');
+  const help = document.getElementById('code-help');
+  function sync() {
+    const doctor = document.querySelector('input[name=role]:checked')?.value === 'doctor';
+    document.getElementById('code').required = doctor;
+    label.textContent = doctor ? 'Doctor sign-up code' : 'Doctor invite code (optional)';
+    help.textContent = doctor
+      ? 'Provided by the programme administrator.'
+      : 'Your clinic gives you a 6-character invite code. No code yet? Leave this blank and add it later.';
+  }
+  radios.forEach(r => r.addEventListener('change', sync));
+  sync();
+</script>
+{% endblock %}
