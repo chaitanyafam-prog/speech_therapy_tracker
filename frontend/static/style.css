@@ -97,7 +97,12 @@ audio { width: 100%; margin-top: .75rem; }
 .directory-filter { grid-template-columns: 1fr 1fr auto; align-items: end; }
 .directory-filter label { margin: 0; }
 .directory-form { grid-template-columns: 1fr 1fr; }
-.directory-form button { grid-column: 1 / -1; }
+.clinician-entry { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: .5rem 1rem; margin: .5rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: 12px; }
+.clinician-entry legend { padding: 0 .4rem; font-weight: 700; }
+.clinician-entry label { margin: .3rem 0; }
+.clinician-entry .remove-clinician { justify-self: start; }
+.clinician-actions { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: .75rem; }
+.clinician-actions button { flex: 1; }
 .clinician-card { padding: 1.5rem 1.7rem; }
 .clinician-card h2 { margin-bottom: .4rem; }
 .directory-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin: 1rem 0; }
@@ -113,8 +118,8 @@ audio { width: 100%; margin-top: .75rem; }
   .topbar > a:first-child:not(.brand) { padding: .5rem .6rem; font-size: .68rem; }
   .brand { font-size: .82rem; }
   .page { width: calc(100% - 28px); padding-top: 1.5rem; }
-  .directory-filter,.directory-form,.inline-form { grid-template-columns: 1fr; }
-  .directory-form button { grid-column: auto; }
+  .directory-filter,.directory-form,.inline-form,.clinician-entry { grid-template-columns: 1fr; }
+  .clinician-entry,.clinician-actions { grid-column: auto; }
   .admin-heading { align-items: flex-start; }
   .invite { align-items: flex-start; flex-direction: column; }
   .row { align-items: flex-start; }

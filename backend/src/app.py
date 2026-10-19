@@ -297,28 +297,79 @@ def register_routes(app):
     @admin_required
     def admin_directory():
         db = get_db()
+        form_rows = [{}, {}]
         if request.method == "POST":
-            fields = {key: request.form.get(key, "").strip() for key in (
-                "name", "specialty", "clinic", "address", "city", "place", "phone", "email", "booking_url")}
-            doctor_user_id = request.form.get("doctor_user_id", "").strip() or None
-            if doctor_user_id and not db.execute(
-                    "SELECT 1 FROM users WHERE id = ? AND role = 'doctor'", (doctor_user_id,)).fetchone():
-                flash("Select a registered clinician account or leave that field blank.", "error")
+            field_names = (
+                "name", "specialty", "clinic", "address", "city", "place",
+                "phone", "email", "booking_url", "doctor_user_id",
+            )
+            values = {
+                key: [value.strip() for value in request.form.getlist(key)]
+                for key in field_names
+            }
+            row_count = max((len(items) for items in values.values()), default=0)
+            form_rows = [
+                {
+                    key: values[key][index] if index < len(values[key]) else ""
+                    for key in field_names
+                }
+                for index in range(min(row_count, 50))
+            ]
+            errors = []
+            if row_count == 0:
+                errors.append("Enter at least one clinician listing.")
+            elif row_count > 50:
+                errors.append("Add no more than 50 clinician listings at a time.")
+            elif any(len(items) != row_count for items in values.values()):
+                errors.append("Complete every field in each clinician listing.")
             else:
-                db.execute(
-                    "INSERT INTO clinician_directory "
-                    "(doctor_user_id, name, specialty, clinic, address, city, place, phone, email, booking_url, created_at) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (doctor_user_id, fields["name"], fields["specialty"], fields["clinic"], fields["address"],
-                     fields["city"], fields["place"], fields["phone"], fields["email"],
-                     fields["booking_url"], now_iso()))
-                db.commit()
-                flash("Listing added as pending. Review the details and approve it to show it in the public directory.", "success")
-                return redirect(url_for("admin_directory"))
+                listings = []
+                for index in range(row_count):
+                    fields = {key: values[key][index] for key in field_names[:-1]}
+                    doctor_user_id = values["doctor_user_id"][index] or None
+                    row_errors = directory_validation_errors(fields)
+                    if doctor_user_id and not db.execute(
+                            "SELECT 1 FROM users WHERE id = ? AND role = 'doctor'",
+                            (doctor_user_id,)).fetchone():
+                        row_errors.append(
+                            "Select a registered clinician account or leave that field blank."
+                        )
+                    errors.extend(
+                        f"Listing {index + 1}: {error}" for error in row_errors
+                    )
+                    listings.append((doctor_user_id, fields))
+
+                if not errors:
+                    created_at = now_iso()
+                    db.executemany(
+                        "INSERT INTO clinician_directory "
+                        "(doctor_user_id, name, specialty, clinic, address, city, place, phone, email, booking_url, created_at) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [
+                            (
+                                doctor_user_id, fields["name"], fields["specialty"],
+                                fields["clinic"], fields["address"], fields["city"],
+                                fields["place"], fields["phone"], fields["email"],
+                                fields["booking_url"], created_at,
+                            )
+                            for doctor_user_id, fields in listings
+                        ],
+                    )
+                    db.commit()
+                    flash(
+                        f"{row_count} listing(s) added as pending. Review the details "
+                        "and approve each one to show it in the public directory.",
+                        "success",
+                    )
+                    return redirect(url_for("admin_directory"))
+
+            for error in errors:
+                flash(error, "error")
         doctors = db.execute("SELECT id, name, email FROM users WHERE role = 'doctor' ORDER BY name").fetchall()
         entries = db.execute("SELECT * FROM clinician_directory ORDER BY verification_status, city, place, name").fetchall()
         return render_template("admin_directory.html", entries=entries, doctor_accounts=doctors,
-                               validation_errors=directory_validation_errors)
+                               validation_errors=directory_validation_errors,
+                               form_rows=form_rows)
 
     @app.route("/admin/doctors/<int:entry_id>/verify", methods=["POST"])
     @admin_required
