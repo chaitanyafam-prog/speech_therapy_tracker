@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token }}">
-  <title>{% block title %}Speech Exercise Tracker{% endblock %}</title>
+  <title>{% block title %}Loquia{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
 <body>
   <header class="topbar">
     <a href="{{ url_for('clinician_directory') }}">Clinician directory</a>
-    <a class="brand" href="{{ url_for('index') }}">Speech Exercise Tracker</a>
+    <a class="brand" href="{{ url_for('index') }}">Loquia</a>
     {% if user %}
     <form method="post" action="{{ url_for('logout') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

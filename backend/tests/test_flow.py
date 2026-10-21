@@ -253,6 +253,12 @@ class NearbyDoctorsTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         r.close()
 
+    def test_clinician_directory_links_back_to_login(self):
+        client = Client(self.app)
+        response = client.get("/directory")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('href="/login">Back to login</a>', response.get_data(as_text=True))
+
 
 class LiveSearchTest(unittest.TestCase):
     SECRET = "AIza-SECRET-KEY-XYZ"

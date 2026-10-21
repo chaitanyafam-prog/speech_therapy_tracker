@@ -1,9 +1,22 @@
 {% extends "base.html" %}
-{% block title %}{{ patient['name'] }} · Speech Exercise Tracker{% endblock %}
+{% block title %}{{ patient['name'] }} · Loquia{% endblock %}
 {% block content %}
 <p><a href="{{ url_for('doctor_home') }}">← All patients</a></p>
 <h1>{{ patient['name'] }}</h1>
 <p class="muted">{{ patient['email'] }}</p>
+
+<section class="card">
+  <h2>Speech screening</h2>
+  {% if screening %}
+    <p>
+      Latest result:
+      <strong>{{ 'Patterns detected' if screening['prediction'] == 1 else 'No patterns detected' }}</strong>
+      <span class="muted">({{ '%.1f' | format(screening['confidence']) }}% confidence, {{ screening['created_at'] | ist }})</span>
+    </p>
+  {% else %}
+    <p class="muted">No screening results yet.</p>
+  {% endif %}
+</section>
 
 <section class="card">
   <h2>Exercise plan</h2>

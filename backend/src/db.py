@@ -47,6 +47,16 @@ CREATE TABLE IF NOT EXISTS recordings (
 CREATE INDEX IF NOT EXISTS idx_recordings_patient ON recordings(patient_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_assignments_patient ON assignments(patient_id, active);
 
+CREATE TABLE IF NOT EXISTS screening_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id INTEGER NOT NULL REFERENCES users(id),
+    prediction INTEGER NOT NULL CHECK (prediction IN (0, 1)),
+    confidence REAL NOT NULL CHECK (confidence BETWEEN 0 AND 100),
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_screening_results_patient
+    ON screening_results(patient_id, created_at);
+
 CREATE TABLE IF NOT EXISTS clinician_directory (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     doctor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,

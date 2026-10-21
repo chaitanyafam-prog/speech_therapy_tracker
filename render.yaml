@@ -29,3 +29,7 @@ services:
         sync: false
       - key: THERAPY_TRACKER_URL
         sync: false
+      - key: SCREENER_URL
+        sync: false
+      - key: SCREENING_SHARED_SECRET
+        sync: false

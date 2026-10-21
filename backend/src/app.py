@@ -5,7 +5,7 @@ import re
 import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlsplit, urlunsplit
 
 from flask import (Flask, abort, flash, g, jsonify, redirect, render_template,
                    request, send_file, session, url_for)
@@ -33,6 +33,7 @@ _load_project_env()
 
 from . import audio  # noqa: E402
 from .db import close_db, get_db, init_db  # noqa: E402
+from .shared import linking  # noqa: E402
 
 IST = timezone(timedelta(hours=5, minutes=30))  # Chennai; India has no DST
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no 0/O/1/I
@@ -67,6 +68,8 @@ def create_app(test_config=None):
         DOCTOR_SIGNUP_CODE=os.environ.get("DOCTOR_SIGNUP_CODE", "chennai-pilot"),
         SECRET_KEY=os.environ.get("SECRET_KEY") or _persistent_secret(app.instance_path),
         ADMIN_PASSWORD=os.environ.get("ADMIN_PASSWORD", ""),
+        SCREENER_URL=os.environ.get("SCREENER_URL", ""),
+        SCREENING_SHARED_SECRET=os.environ.get("SCREENING_SHARED_SECRET", "").strip() or None,
     )
     if test_config:
         app.config.update(test_config)
@@ -195,7 +198,7 @@ def register_hooks(app):
     def csrf_protect():
         if "csrf" not in session:
             session["csrf"] = secrets.token_hex(16)
-        if request.method == "POST":
+        if request.method == "POST" and request.endpoint != "api_screening_result":
             sent = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token", "")
             if not hmac.compare_digest(sent, session["csrf"]):
                 abort(400, "Invalid or missing CSRF token.")
@@ -213,7 +216,8 @@ def register_hooks(app):
     @app.after_request
     def no_store(resp):
         # Health data: do not let browsers/proxies cache authenticated pages or audio.
-        if current_user() is not None or session.get("is_admin"):
+        if (current_user() is not None or session.get("is_admin")
+                or request.endpoint == "api_screening_result"):
             resp.headers["Cache-Control"] = "private, no-store"
         return resp
 
@@ -270,6 +274,61 @@ def register_routes(app):
             db.commit()
             flash("You are now linked to this clinician. Their exercise plan will appear in your tracker.", "success")
         return redirect(url_for("patient_home"))
+
+    @app.route("/api/screenings", methods=["POST"])
+    def api_screening_result():
+        secret = app.config.get("SCREENING_SHARED_SECRET")
+        if not secret:
+            return jsonify(error="Screening integration is not configured."), 503
+        authorization = request.headers.get("Authorization", "")
+        if not hmac.compare_digest(authorization, "Bearer " + secret):
+            return jsonify(error="Unauthorized."), 401
+
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify(error="Invalid screening result."), 400
+        token = data.get("token")
+        prediction = data.get("prediction")
+        confidence = data.get("confidence")
+        if (type(prediction) is not int or prediction not in (0, 1)
+                or isinstance(confidence, bool)
+                or not isinstance(confidence, (int, float))
+                or not 0 <= confidence <= 100):
+            return jsonify(error="Invalid screening result."), 400
+        patient_id = linking.read_token(token, secret)
+        if patient_id is None:
+            return jsonify(error="Invalid or expired screening link."), 400
+
+        db = get_db()
+        patient = db.execute(
+            "SELECT id FROM users WHERE id = ? AND role = 'patient'", (patient_id,)
+        ).fetchone()
+        if patient is None:
+            return jsonify(error="Invalid or expired screening link."), 400
+        db.execute(
+            "INSERT INTO screening_results (patient_id, prediction, confidence, created_at) "
+            "VALUES (?, ?, ?, ?)",
+            (patient_id, prediction, float(confidence), now_iso()),
+        )
+        db.commit()
+        return jsonify(message="Screening result saved."), 201
+
+    @app.route("/patient/screen")
+    @login_required("patient")
+    def patient_screen():
+        screener_url = app.config.get("SCREENER_URL") or os.environ.get("SCREENER_URL", "")
+        secret = app.config.get("SCREENING_SHARED_SECRET")
+        if not screener_url or not secret:
+            flash("Screening is not available right now. Please contact your clinician.", "error")
+            return redirect(url_for("patient_home"))
+        token = linking.make_token(current_user()["id"], secret)
+        parts = urlsplit(screener_url)
+        query = [(key, value) for key, value in parse_qsl(parts.query) if key != "link"]
+        query.append(("link", token))
+        return redirect(urlunsplit((
+            parts.scheme, parts.netloc, parts.path or ("/" if parts.netloc else ""),
+            urlencode(query), parts.fragment,
+        )))
 
     @app.route("/admin", methods=["GET", "POST"])
     def admin():
@@ -506,8 +565,13 @@ def register_routes(app):
                 WHERE r.patient_id = ? ORDER BY r.created_at DESC LIMIT 100""",
             (patient_id,)).fetchall()
         templates = db.execute("SELECT id, title FROM exercise_templates ORDER BY id").fetchall()
+        screening = db.execute(
+            "SELECT prediction, confidence, created_at FROM screening_results "
+            "WHERE patient_id = ? ORDER BY created_at DESC, id DESC LIMIT 1",
+            (patient_id,),
+        ).fetchone()
         return render_template("doctor_patient.html", patient=patient, plan=adherence(db, patient_id),
-                               recordings=recordings, templates=templates)
+                               recordings=recordings, templates=templates, screening=screening)
 
     @app.route("/doctor/patients/<int:patient_id>/assign", methods=["POST"])
     @login_required("doctor")
@@ -575,7 +639,15 @@ def register_routes(app):
         user = current_user()
         doctor = (db.execute("SELECT name FROM users WHERE id = ?", (user["doctor_id"],)).fetchone()
                   if user["doctor_id"] else None)
-        return render_template("patient_home.html", doctor=doctor, plan=adherence(db, user["id"]))
+        screening = db.execute(
+            "SELECT prediction, confidence, created_at FROM screening_results "
+            "WHERE patient_id = ? ORDER BY created_at DESC, id DESC LIMIT 1",
+            (user["id"],),
+        ).fetchone()
+        screener_url = app.config.get("SCREENER_URL") or os.environ.get("SCREENER_URL", "")
+        screening_enabled = bool(screener_url and app.config.get("SCREENING_SHARED_SECRET"))
+        return render_template("patient_home.html", doctor=doctor, plan=adherence(db, user["id"]),
+                               screening=screening, screening_enabled=screening_enabled)
 
     @app.route("/patient/link", methods=["POST"])
     @login_required("patient")
